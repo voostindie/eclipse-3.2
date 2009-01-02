@@ -1,0 +1,160 @@
+
+            XXXXX    XXXXX   X       X   XXXXXX    XXXXX    XXXXX
+           X     X  X     X  X       X   X     X  X     X  X     X
+           X     X  X        X       X   X     X  X        X     X
+           XXXXXX   X        X       X   XXXXXX    XXXXX   XXXXXX
+           X        X     X  X       X   X              X  X
+            XXXXXX   XXXXX    XXXXX  X   X        XXXXXX    XXXXXX
+
+                              -  version 3.2  -
+
+-------------------------------------------------------------------------------
+ ABOUT
+-------------------------------------------------------------------------------
+
+This is Eclipse: the Extensible Class Library for PHP Software Engineers, a
+generic object-oriented programming library that aims to provide a set of
+compact, efficient and powerful classes that are widely usable in all kinds
+of PHP applications. It is designed and implemented using Design Patterns,
+and as such offers iterators for all kinds of datastructures, easy to use
+database abstraction classes, and lots more.
+
+Eclipse is developed and maintained by:
+
+    Vincent Oostindie, <eclipse@sunlight.tmfweb.nl>
+
+This library is released under the GNU Lesser General Public License (LGPL),
+version 2.1 or later. See the file LICENSE for more information.
+
+This README provides some basic information on Eclipse. For code samples,
+extensive installation instructions, frequently asked questions and other
+information, please visit Eclipse's web site at:
+
+    http://www.sunlight.tmfweb.nl/eclipse/
+
+Full API documentation for the library is available in HTML in the 'docs'
+subdirectory of this package.
+
+-------------------------------------------------------------------------------
+ WHAT'S NEW
+-------------------------------------------------------------------------------
+
+Version 3.2, January 31, 2003:
+
+- The ArrayIterator example in this README was incorrect; an iterator was
+  instantiated directly for an array, while this had to be a variable.
+
+- Class QueryIterator had a minor efficiency problem by calling the method
+  getRowCount of the QueryResult it iterated over repeatedly. This has been
+  fixed.
+  
+- Fixed a bug in class FileIterator where the last line in a file was skipped
+  if it didn't end with a newline.
+
+Version 3.1, September 5, 2002:
+
+- All classes now create, pass and return objects as references (and never as
+  copies), to eliminate all possible strange and undesired behavior because of
+  PHP 4's object model. See below for more information.
+
+- Class Url no longer appends session IDs to relative URLs. See the API
+  documentation on this class for the reasons why.
+
+- Other minor bugfixes.
+
+-------------------------------------------------------------------------------
+ REQUIREMENTS
+-------------------------------------------------------------------------------
+
+Eclipse can be installed on any PHP-enabled web server. The minimal PHP version
+the library can work with is version 4.1.0, but it's wise to update PHP anyhow
+if this is still the version you use. Newer versions of PHP (the newest being
+version 4.2.2 at the time of writing) not only have much better performance,
+they also solve a number of important security problems.
+
+Although PHP can be configured in many different ways (through 'php.ini'),
+Eclipse can work with any possible configuration without modification. However,
+it is advisable to set AT LEAST the following options:
+
+    register_globals: Off
+    magic_quotes_gpc: Off
+
+For historical reasons these options can still be enabled, but from the very
+start they have been a big mistake in PHP's implementation; they should have
+always been disabled, and not configurable at all.
+
+-------------------------------------------------------------------------------
+ INSTALLATION
+-------------------------------------------------------------------------------
+
+To install Eclipse, simply unpack the library somewhere on the web server,
+preferably NOT on the web root.
+
+To be able to use Eclipse in your own programming practices, do either one of
+the following two things:
+1. Add the directory Eclipse was unpacked in to PHP's global include path. Be
+   advised that this will lead to problems if multiple versions of Eclipse must
+   be installed and used concurrently.
+2. Set the constant 'ECLIPSE_ROOT' to the directory Eclipse was unpacked in.
+   This allows different applications to use different versions of the library,
+   and is therefore the preferred way.
+
+IMPORTANT: when defining the constant 'ECLIPSE_ROOT', ALWAYS add a trailing
+directory delimiter to the path. So:
+
+    define('ECLIPSE_ROOT', '/path/to/eclipse');  // INCORRECT
+    define('ECLIPSE_ROOT', '/path/to/eclipse/'); // CORRECT
+
+-------------------------------------------------------------------------------
+ USAGE TIPS
+-------------------------------------------------------------------------------
+
+Here are a number of useful tips that come in handy when developing software
+with Eclipse and object-oriented programming in PHP in general:
+
+- To get Java-like object behavior, ALWAYS use references when ...
+   ... creating objects : $object =& new Object;
+   ... passing objects  : function receiveObject(&$object) { //...           }
+   ... returning objects: function &returnObject()         { return $object; }
+
+  PHP's default behavior is to create copies, which is almost always NOT what
+  you really want. When some object contains a reference to a second object
+  and you create a copy of the first object instead of a reference, this copy
+  will NOT share the reference to the second object, but will hold a copy of
+  that object instead. This can (and will) lead to strange and undesired
+  behavior. To summarize:
+
+    function &getNiftyComputationResult(&$iterator)
+    {
+        $result =& new NiftyComputationResult;
+        for ($iterator->reset(); $iterator->isValid(); $iterator->next())
+        {
+            $result->add($iterator->getCurrent());
+        }
+        return $result;
+    }
+
+    $numbers = array(8, 5, 3, 9, 6, 1, 7, 4, 2);
+    $it      =& new ArrayIterator($numbers);
+    $result  =& getNiftyComputationResult($it);
+
+  It takes a while to get used to, but it is truly the only way to correctly
+  handle objects in PHP 4 ('correctly' meaning 'Java-like' in this context).
+
+- When introducing a class into the system, either use 'include_once' or
+  'require_once', and not 'include' or 'require'. This will ensure that every
+  class will be introduced to the system at most once. Use 'require_once' if a
+  class must always be made available, and 'include_once' if this is based on
+  some conditional. For example:
+
+    require_once(ECLIPSE_ROOT . 'ArrayIterator.php');
+    $numbers =  array(8, 5, 3, 9, 6, 1, 7, 4, 2);
+    $it      =& new ArrayIterator($numbers);
+
+    if ($doRedirect)
+    {
+        include_once(ECLIPSE_ROOT . 'Url.php');
+        $url =& new Url('http://localhost/error.php');
+        header('Location: ' . $url->getUrl());
+        exit();
+    }
